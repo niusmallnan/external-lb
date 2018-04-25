@@ -197,12 +197,7 @@ func (p *AliyunSLBProvider) GetLBConfigs() ([]model.LBConfig, error) {
 	args := &slb.DescribeLoadBalancersArgs{
 		RegionId: common.Region(p.regionId),
 	}
-	if len(p.vpcId) > 0 {
-		args.VpcId = p.vpcId
-		args.NetworkType = string(common.VPC)
-	} else {
-		args.NetworkType = string(common.Classic)
-	}
+
 	allLb, err := p.slbClient.DescribeLoadBalancers(args)
 	if err != nil {
 		return lbConfigs, fmt.Errorf("Failed to lookup load balancers: %v", err)
@@ -272,9 +267,9 @@ func (p *AliyunSLBProvider) GetLBConfigs() ([]model.LBConfig, error) {
 			}
 			for _, inst := range ecsInstances {
 				var ip string
-				if p.usePrivateIP {
+				if p.usePrivateIP && len(inst.InnerIpAddress.IpAddress) > 0 {
 					ip = inst.InnerIpAddress.IpAddress[0]
-				} else {
+				} else if len(inst.PublicIpAddress.IpAddress) > 0 {
 					ip = inst.PublicIpAddress.IpAddress[0]
 				}
 
